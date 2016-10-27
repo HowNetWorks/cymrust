@@ -1,0 +1,15 @@
+[package]
+name = "cymrust"
+version = "0.1.0"
+authors = ["Ossi Herrala <devnull@hownetworks.io>"]
+
+description = "Query Team Cymru's IP-to-ASN mapping via DNS"
+homepage = "https://github.com/HowNetWorks/cymrust#readme"
+repository = "https://github.com/HowNetWorks/cymrust"
+readme = "README.md"
+
+license = "MIT"
+
+[dependencies]
+chrono = "0.2.25"
+resolve = "0.1.2"

@@ -1,0 +1,22 @@
+machine:
+  environment:
+    PATH: "$PATH:$HOME/.cargo/bin/"
+    RUST_BACKTRACE: 1
+
+dependencies:
+  cache_directories:
+    - "~/.cargo/"
+    - "~/.multirust/"
+  pre:
+    - cat $HOME/.gitconfig && mv $HOME/.gitconfig{,.orig}
+    - curl -sSf https://sh.rustup.rs | sh -s -- -y
+    - rustup install beta
+    - rustup install nightly
+  override:
+    - rustup update
+
+test:
+  override:
+    - rustup run stable cargo test
+    - rustup run beta cargo test
+    - rustup run nightly cargo test
