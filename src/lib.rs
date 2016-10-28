@@ -1,5 +1,6 @@
 extern crate chrono;
 extern crate resolve;
+extern crate rustc_serialize;
 
 use std::io;
 use std::net::{IpAddr, Ipv6Addr};
@@ -13,10 +14,10 @@ use resolve::resolver::DnsResolver;
 
 /// IP-to-ASN mapping information
 ///
-#[derive(Debug, Hash, PartialEq, PartialOrd, Eq, Ord)]
+#[derive(Debug, Hash, PartialEq, PartialOrd, Eq, Ord, RustcEncodable)]
 pub struct CymruIP2ASN {
     /// IP Address used in query
-    pub ip_addr: IpAddr,
+    pub ip_addr: String,
     /// BGP prefix
     pub bgp_prefix: String,
     /// BGP Origin's Autonomous System (AS) number
@@ -27,8 +28,8 @@ pub struct CymruIP2ASN {
     pub country_code: String,
     /// Regional registrar name
     pub registry: String,
-    /// BGP prefix alllocation date
-    pub allocated: Option<NaiveDate>,
+    /// BGP prefix allocation date
+    pub allocated: Option<String>,
 }
 
 #[derive(Debug, Hash, PartialEq, PartialOrd, Eq, Ord)]
@@ -58,13 +59,13 @@ pub fn cymru_ip2asn(ip: IpAddr) -> Result<CymruIP2ASN, String> {
     let origin: CymruOrigin = try!(cymru_origin(ip));
     let asn: CymruASN = try!(cymru_asn(origin.as_number));
     let result = CymruIP2ASN {
-        ip_addr: ip,
+        ip_addr: ip.to_string(),
         bgp_prefix: origin.bgp_prefix,
         as_number: origin.as_number,
         as_name: asn.as_name,
         country_code: origin.country_code,
         registry: origin.registry,
-        allocated: origin.allocated,
+        allocated: origin.allocated.map(|s| s.to_string()),
     };
     Ok(result)
 }

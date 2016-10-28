@@ -13,3 +13,4 @@ license = "MIT"
 [dependencies]
 chrono = "0.2.25"
 resolve = "0.1.2"
+rustc-serialize = "0.3.19"
