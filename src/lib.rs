@@ -109,7 +109,7 @@ fn cymru_asn(asn: u32) -> Result<Vec<CymruASN>, String> {
             if results.is_empty() {
                 return Err("No results found".to_string());
             }
-            return Ok(results);
+            Ok(results)
         }
     }
 }
@@ -141,7 +141,7 @@ fn cymru_origin(ip: IpAddr) -> Result<Vec<CymruOrigin>, String> {
             if results.is_empty() {
                 return Err("No results found".to_string());
             }
-            return Ok(results);
+            Ok(results)
         }
     }
 }
@@ -159,7 +159,7 @@ fn parse_cymru_asn(records: Vec<String>, cache_until: SystemTime) -> Vec<CymruAS
     let mut results = Vec::with_capacity(records.len());
 
     for record in records {
-        let fields: Vec<&str> = record.split("|").map(str::trim).collect();
+        let fields: Vec<&str> = record.split('|').map(str::trim).collect();
         let as_number: u32 = match fields[0].parse() {
             Err(_) => continue,
             Ok(n) => n,
@@ -193,7 +193,7 @@ fn parse_cymru_origin(records: Vec<String>, cache_until: SystemTime) -> Vec<Cymr
     let mut results = Vec::with_capacity(records.len());
 
     for record in records {
-        let fields: Vec<&str> = record.split("|").map(str::trim).collect();
+        let fields: Vec<&str> = record.split('|').map(str::trim).collect();
         let as_number: u32 = match fields[0].parse() {
             Err(_) => continue,
             Ok(n) => n,
@@ -224,7 +224,7 @@ fn resolve_txt(name: &str) -> io::Result<Vec<String>> {
     let recs: Vec<Txt> = try!(r.resolve_record(name));
     let mut txts = Vec::with_capacity(recs.len());
 
-    for rec in recs.into_iter() {
+    for rec in recs {
         let as_str = String::from_utf8(rec.data);
         if as_str.is_ok() {
             txts.push(as_str.unwrap());
