@@ -1,9 +1,10 @@
 extern crate chrono;
 extern crate resolve;
-extern crate rustc_serialize;
 
 use std::io;
 use std::net::{IpAddr, Ipv6Addr};
+use std::time::{SystemTime, Duration};
+use std::cmp;
 
 use chrono::NaiveDate;
 
@@ -14,7 +15,7 @@ use resolve::resolver::DnsResolver;
 
 /// IP-to-ASN mapping information
 ///
-#[derive(Debug, Hash, PartialEq, PartialOrd, Eq, Ord, RustcEncodable)]
+#[derive(Debug, PartialEq, PartialOrd, Eq, Ord)]
 pub struct CymruIP2ASN {
     /// IP Address used in query
     pub ip_addr: String,
@@ -30,24 +31,28 @@ pub struct CymruIP2ASN {
     pub registry: String,
     /// BGP prefix allocation date
     pub allocated: Option<String>,
+    /// When information contained in this struct expires
+    pub expires: SystemTime,
 }
 
-#[derive(Debug, Hash, PartialEq, PartialOrd, Eq, Ord)]
+#[derive(Debug, PartialEq, PartialOrd, Eq, Ord)]
 struct CymruASN {
     pub as_number: u32,
     pub country_code: String,
     pub registry: String,
     pub allocated: Option<NaiveDate>,
     pub as_name: String,
+    pub expires: SystemTime,
 }
 
-#[derive(Debug, Hash, PartialEq, PartialOrd, Eq, Ord)]
+#[derive(Debug, PartialEq, PartialOrd, Eq, Ord)]
 struct CymruOrigin {
     pub as_number: u32,
     pub bgp_prefix: String,
     pub country_code: String,
     pub registry: String,
     pub allocated: Option<NaiveDate>,
+    pub expires: SystemTime,
 }
 
 
@@ -74,6 +79,7 @@ pub fn cymru_ip2asn(ip: IpAddr) -> Result<Vec<CymruIP2ASN>, String> {
             country_code: origin.country_code,
             registry: origin.registry,
             allocated: origin.allocated.map(|s| s.to_string()),
+            expires: cmp::min(origin.expires, asn[0].expires),
         };
         results.push(result);
     }
@@ -88,13 +94,18 @@ pub fn cymru_ip2asn(ip: IpAddr) -> Result<Vec<CymruIP2ASN>, String> {
 
 /// Resolve information about AS number
 ///
+/// Cymru's DNS server returns 86400 second TTL
 fn cymru_asn(asn: u32) -> Result<Vec<CymruASN>, String> {
+    let ttl = Duration::from_secs(86400);
     let query = format!("AS{}.asn.cymru.com", asn.to_string());
 
     match resolve_txt(&query) {
         Err(err) => Err(err.to_string()),
         Ok(records) => {
-            let results = parse_cymru_asn(records);
+            let now = SystemTime::now();
+            let cache_until: SystemTime = now + ttl;
+
+            let results = parse_cymru_asn(records, cache_until);
             if results.is_empty() {
                 return Err("No results found".to_string());
             }
@@ -106,7 +117,9 @@ fn cymru_asn(asn: u32) -> Result<Vec<CymruASN>, String> {
 
 /// Resolve information about IP address
 ///
+/// Cymru's DNS server returns 14400 second TTL
 fn cymru_origin(ip: IpAddr) -> Result<Vec<CymruOrigin>, String> {
+    let ttl = Duration::from_secs(14400);
     let query = match ip {
         IpAddr::V4(ipv4) => {
             let o = ipv4.octets();
@@ -121,7 +134,10 @@ fn cymru_origin(ip: IpAddr) -> Result<Vec<CymruOrigin>, String> {
     match resolve_txt(&query) {
         Err(err) => Err(err.to_string()),
         Ok(records) => {
-            let results = parse_cymru_origin(records);
+            let now = SystemTime::now();
+            let cache_until: SystemTime = now + ttl;
+
+            let results = parse_cymru_origin(records, cache_until);
             if results.is_empty() {
                 return Err("No results found".to_string());
             }
@@ -139,7 +155,7 @@ fn cymru_origin(ip: IpAddr) -> Result<Vec<CymruOrigin>, String> {
 ///
 /// taken from https://www.team-cymru.org/IP-ASN-mapping.html#dns
 ///
-fn parse_cymru_asn(records: Vec<String>) -> Vec<CymruASN> {
+fn parse_cymru_asn(records: Vec<String>, cache_until: SystemTime) -> Vec<CymruASN> {
     let mut results = Vec::with_capacity(records.len());
 
     for record in records {
@@ -155,6 +171,7 @@ fn parse_cymru_asn(records: Vec<String>) -> Vec<CymruASN> {
             registry: fields[2].to_string(),
             allocated: parse_date(fields[3]),
             as_name: fields[4].to_string(),
+            expires: cache_until,
         };
 
         results.push(result);
@@ -172,7 +189,7 @@ fn parse_cymru_asn(records: Vec<String>) -> Vec<CymruASN> {
 ///
 /// taken from https://www.team-cymru.org/IP-ASN-mapping.html#dns
 ///
-fn parse_cymru_origin(records: Vec<String>) -> Vec<CymruOrigin> {
+fn parse_cymru_origin(records: Vec<String>, cache_until: SystemTime) -> Vec<CymruOrigin> {
     let mut results = Vec::with_capacity(records.len());
 
     for record in records {
@@ -188,6 +205,7 @@ fn parse_cymru_origin(records: Vec<String>) -> Vec<CymruOrigin> {
             country_code: fields[2].to_string(),
             registry: fields[3].to_string(),
             allocated: parse_date(fields[4]),
+            expires: cache_until,
         };
         results.push(result);
     }
@@ -243,6 +261,8 @@ fn parse_date(date: &str) -> Option<NaiveDate> {
 
 #[cfg(test)]
 mod tests {
+    use std::time::SystemTime;
+
     #[test]
     fn test_ipv6_nibbles() {
         use super::ipv6_nibbles;
@@ -254,7 +274,8 @@ mod tests {
     fn test_parse_cymru_asn() {
         use super::{CymruASN, parse_cymru_asn, parse_date};
         let vec = vec!["23028 | US | arin | 2002-01-04 | TEAMCYMRU - SAUNET".to_string()];
-        let results: Vec<CymruASN> = parse_cymru_asn(vec);
+        let ttl = SystemTime::now();
+        let results: Vec<CymruASN> = parse_cymru_asn(vec, ttl);
         assert_eq!(results.len(), 1);
         let first = results.first().unwrap();
         assert_eq!(first.as_number, 23028);
@@ -267,7 +288,8 @@ mod tests {
     #[test]
     fn test_parse_cymru_asn_empty() {
         use super::{CymruASN, parse_cymru_asn};
-        let results: Vec<CymruASN> = parse_cymru_asn(vec!["".to_string()]);
+        let ttl = SystemTime::now();
+        let results: Vec<CymruASN> = parse_cymru_asn(vec!["".to_string()], ttl);
         assert_eq!(results.len(), 0);
     }
 
@@ -275,7 +297,8 @@ mod tests {
     fn test_parse_cymru_origin() {
         use super::{CymruOrigin, parse_cymru_origin, parse_date};
         let vec = vec!["23028 | 216.90.108.0/24 | US | arin | 1998-09-25".to_string()];
-        let results: Vec<CymruOrigin> = parse_cymru_origin(vec);
+        let ttl = SystemTime::now();
+        let results: Vec<CymruOrigin> = parse_cymru_origin(vec, ttl);
         assert_eq!(results.len(), 1);
         let first = results.first().unwrap();
         assert_eq!(first.as_number, 23028);
@@ -288,7 +311,8 @@ mod tests {
     #[test]
     fn test_parse_cymru_origin_empty() {
         use super::{CymruOrigin, parse_cymru_origin};
-        let results: Vec<CymruOrigin> = parse_cymru_origin(vec!["".to_string()]);
+        let ttl = SystemTime::now();
+        let results: Vec<CymruOrigin> = parse_cymru_origin(vec!["".to_string()], ttl);
         assert_eq!(results.len(), 0);
     }
 
