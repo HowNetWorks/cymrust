@@ -18,7 +18,7 @@ use resolve::resolver::DnsResolver;
 #[derive(Debug, PartialEq, PartialOrd, Eq, Ord)]
 pub struct CymruIP2ASN {
     /// IP Address used in query
-    pub ip_addr: String,
+    pub ip_addr: IpAddr,
     /// BGP prefix
     pub bgp_prefix: String,
     /// BGP Origin's Autonomous System (AS) number
@@ -72,7 +72,7 @@ pub fn cymru_ip2asn(ip: IpAddr) -> Result<Vec<CymruIP2ASN>, String> {
         let asn: Vec<CymruASN> = try!(cymru_asn(origin.as_number));
 
         let result = CymruIP2ASN {
-            ip_addr: ip.to_string(),
+            ip_addr: ip,
             bgp_prefix: origin.bgp_prefix,
             as_number: origin.as_number,
             as_name: asn[0].as_name.to_string(),
