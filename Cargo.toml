@@ -1,14 +1,18 @@
 [package]
 name = "cymrust"
-version = "0.2.0"
-authors = ["Ossi Herrala <devnull@hownetworks.io>"]
+version = "0.3.0"
+authors = [ "Ossi Herrala <devnull@hownetworks.io>" ]
 
 description = "Query Team Cymru's IP-to-ASN mapping via DNS"
+keywords = [ "ip", "network", "bgp", "resolver", "cymru" ]
 homepage = "https://github.com/HowNetWorks/cymrust#readme"
 repository = "https://github.com/HowNetWorks/cymrust"
 readme = "README.md"
 
 license = "MIT"
+
+exclude = [ ".gitignore", "circle.yml" ]
+
 
 [dependencies]
 chrono = "0.2.25"

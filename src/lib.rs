@@ -1,3 +1,12 @@
+//! Simple library to query [Team Cymru](https://www.team-cymru.org/)'s
+//! [IP-to-ASN](https://www.team-cymru.org/IP-ASN-mapping.html) mapping information via DNS.
+//!
+//! Please, see Team Cymru's documentation before using this library. Cymru also warns not to use
+//! their mapping as Geo-IP service.
+//!
+//! For easiest IP-to-ASN mapping, see [cymru_ip2asn](fn.cymru_ip2asn.html) function.
+//! To query only information about AS Number, see [cymru_asn](fn.cymru_asn.html).
+
 extern crate chrono;
 extern crate resolve;
 
@@ -35,13 +44,21 @@ pub struct CymruIP2ASN {
     pub expires: SystemTime,
 }
 
+/// ASN information
+///
 #[derive(Debug, PartialEq, PartialOrd, Eq, Ord)]
-struct CymruASN {
+pub struct CymruASN {
+    /// BGP Origin's Autonomous System (AS) number
     pub as_number: u32,
+    /// Country code
     pub country_code: String,
+    /// Regional registrar name
     pub registry: String,
+    /// BGP prefix allocation date
     pub allocated: Option<NaiveDate>,
+    /// Autonomous System (AS) description
     pub as_name: String,
+    /// When information contained in this struct expires
     pub expires: SystemTime,
 }
 
@@ -56,7 +73,18 @@ struct CymruOrigin {
 }
 
 
-/// Query Cymru's IP-to-ASN mapping service
+/// Query Cymru's IP-to-ASN mapping service using DNS
+///
+/// This function first queries (Cymru's IP-to-ASN)[https://www.team-cymru.org/IP-ASN-mapping.html]
+/// (AS number) mapping to learn AS number(s) for IP. Then for every AS unique number, it does a
+/// new query to get ASN information. The returned `CymruIP2ASN` is union of IP-to-ASN mapping and
+/// ASN query information.
+///
+/// No caching is performed by this function.
+///
+/// # Errors
+///
+/// If DNS resolver fails or there's error in DNS query, the error is returned as String
 ///
 pub fn cymru_ip2asn(ip: IpAddr) -> Result<Vec<CymruIP2ASN>, String> {
     let origins: Vec<CymruOrigin> = try!(cymru_origin(ip));
@@ -65,6 +93,7 @@ pub fn cymru_ip2asn(ip: IpAddr) -> Result<Vec<CymruIP2ASN>, String> {
     'origins: for origin in origins {
         for result in &results {
             if origin.as_number == result.as_number {
+                // Skip AS numbers we already know about
                 continue 'origins;
             }
         }
@@ -92,10 +121,19 @@ pub fn cymru_ip2asn(ip: IpAddr) -> Result<Vec<CymruIP2ASN>, String> {
 }
 
 
-/// Resolve information about AS number
+/// Resolve information about AS number using DNS
 ///
-/// Cymru's DNS server returns 86400 second TTL
-fn cymru_asn(asn: u32) -> Result<Vec<CymruASN>, String> {
+/// This function queries (Cymru's IP-to-ASN)[https://www.team-cymru.org/IP-ASN-mapping.html]
+/// service and returns information Cymru knows about given AS number.
+///
+/// No caching is performed by this function.
+///
+/// # Errors
+///
+/// If DNS resolver fails or there's error in DNS query, the error is returned as String
+///
+pub fn cymru_asn(asn: u32) -> Result<Vec<CymruASN>, String> {
+    // Cymru's DNS server returns 86400 second TTL
     let ttl = Duration::from_secs(86400);
     let query = format!("AS{}.asn.cymru.com", asn.to_string());
 
@@ -117,8 +155,8 @@ fn cymru_asn(asn: u32) -> Result<Vec<CymruASN>, String> {
 
 /// Resolve information about IP address
 ///
-/// Cymru's DNS server returns 14400 second TTL
 fn cymru_origin(ip: IpAddr) -> Result<Vec<CymruOrigin>, String> {
+    // Cymru's DNS server returns 14400 second TTL
     let ttl = Duration::from_secs(14400);
     let query = match ip {
         IpAddr::V4(ipv4) => {
