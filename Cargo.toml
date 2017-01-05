@@ -7,12 +7,12 @@ description = "Query Team Cymru's IP-to-ASN mapping via DNS"
 keywords = [ "ip", "network", "bgp", "resolver", "cymru" ]
 homepage = "https://github.com/HowNetWorks/cymrust#readme"
 repository = "https://github.com/HowNetWorks/cymrust"
+documentation = "https://docs.rs/cymrust/"
 readme = "README.md"
 
 license = "MIT"
 
 exclude = [ ".gitignore", "circle.yml" ]
-
 
 [dependencies]
 chrono = "0.2.25"
