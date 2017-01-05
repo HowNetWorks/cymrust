@@ -6,6 +6,7 @@ machine:
 dependencies:
   cache_directories:
     - "~/.cargo/"
+    - "~/.rustup/"
     - "~/.multirust/"
   pre:
     - cat $HOME/.gitconfig && mv $HOME/.gitconfig{,.orig}
@@ -20,3 +21,11 @@ test:
     - rustup run stable cargo test
     - rustup run beta cargo test
     - rustup run nightly cargo test
+
+deployment:
+  crates.io:
+    tag: /^v[0-9]+\.[0-9]+\.[0-9]+$/
+    commands:
+      - cargo test
+      - cargo package
+      - cargo publish --token ${CRATES_TOKEN}
