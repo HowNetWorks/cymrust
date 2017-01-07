@@ -4,8 +4,8 @@
 //! Please, see Team Cymru's documentation before using this library. Cymru also warns not to use
 //! their mapping as Geo-IP service.
 //!
-//! For easiest IP-to-ASN mapping, see [cymru_ip2asn](fn.cymru_ip2asn.html) function.
-//! To query only information about AS Number, see [cymru_asn](fn.cymru_asn.html).
+//! For easiest IP-to-ASN mapping, see [`cymru_ip2asn`](fn.cymru_ip2asn.html) function.
+//! To query only information about AS Number, see [`cymru_asn`](fn.cymru_asn.html).
 
 extern crate chrono;
 extern crate resolve;
