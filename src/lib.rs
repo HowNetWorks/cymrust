@@ -232,20 +232,25 @@ fn parse_cymru_origin(records: Vec<String>, cache_until: SystemTime) -> Vec<Cymr
 
     for record in records {
         let fields: Vec<&str> = record.split('|').map(str::trim).collect();
-        let as_number: u32 = match fields[0].parse() {
-            Err(_) => continue,
-            Ok(n) => n,
-        };
 
-        let result = CymruOrigin {
-            as_number: as_number,
-            bgp_prefix: fields[1].to_string(),
-            country_code: fields[2].to_string(),
-            registry: fields[3].to_string(),
-            allocated: parse_date(fields[4]),
-            expires: cache_until,
-        };
-        results.push(result);
+        let as_numbers: Vec<&str> = fields[0].split(' ').map(str::trim).collect();
+
+        for asn in as_numbers {
+            let as_number: u32 = match asn.parse() {
+                Err(_) => continue,
+                Ok(n) => n,
+            };
+
+            let result = CymruOrigin {
+                as_number: as_number,
+                bgp_prefix: fields[1].to_string(),
+                country_code: fields[2].to_string(),
+                registry: fields[3].to_string(),
+                allocated: parse_date(fields[4]),
+                expires: cache_until,
+            };
+            results.push(result);
+        }
     }
 
     results
@@ -352,6 +357,23 @@ mod tests {
         let ttl = SystemTime::now();
         let results: Vec<CymruOrigin> = parse_cymru_origin(vec!["".to_string()], ttl);
         assert_eq!(results.len(), 0);
+    }
+
+    #[test]
+    fn test_parse_cymru_origin_multiple_asn() {
+        use super::{CymruOrigin, parse_cymru_origin, parse_date};
+        let vec = vec!["1 23 456 7890 | 203.0.113.0/24 | GB | ripencc | 2006-02-17".to_string()];
+        let ttl = SystemTime::now();
+        let results: Vec<CymruOrigin> = parse_cymru_origin(vec, ttl);
+        assert_eq!(results.len(), 4);
+        let asns = [1, 23, 456, 7890];
+        for item in 0..3 {
+            assert_eq!(results[item].as_number, asns[item]);
+            assert_eq!(results[item].bgp_prefix, "203.0.113.0/24");
+            assert_eq!(results[item].country_code, "GB");
+            assert_eq!(results[item].registry, "ripencc");
+            assert_eq!(results[item].allocated, parse_date("2006-02-17"));
+        }
     }
 
 }
