@@ -21,6 +21,8 @@ use resolve::config::default_config;
 use resolve::record::Txt;
 use resolve::resolver::DnsResolver;
 
+/// AsNumber type to abstract away the fact that AS Number is (currently) 32 bit unsigned integer.
+pub type AsNumber = u32;
 
 /// IP-to-ASN mapping information
 ///
@@ -31,7 +33,7 @@ pub struct CymruIP2ASN {
     /// BGP prefix
     pub bgp_prefix: String,
     /// BGP Origin's Autonomous System (AS) number
-    pub as_number: u32,
+    pub as_number: AsNumber,
     /// Autonomous System (AS) description
     pub as_name: String,
     /// Country code
@@ -49,7 +51,7 @@ pub struct CymruIP2ASN {
 #[derive(Debug, PartialEq, PartialOrd, Eq, Ord)]
 pub struct CymruASN {
     /// BGP Origin's Autonomous System (AS) number
-    pub as_number: u32,
+    pub as_number: AsNumber,
     /// Country code
     pub country_code: String,
     /// Regional registrar name
@@ -64,7 +66,7 @@ pub struct CymruASN {
 
 #[derive(Debug, PartialEq, PartialOrd, Eq, Ord)]
 struct CymruOrigin {
-    pub as_number: u32,
+    pub as_number: AsNumber,
     pub bgp_prefix: String,
     pub country_code: String,
     pub registry: String,
@@ -132,10 +134,10 @@ pub fn cymru_ip2asn(ip: IpAddr) -> Result<Vec<CymruIP2ASN>, String> {
 ///
 /// If DNS resolver fails or there's error in DNS query, the error is returned as String
 ///
-pub fn cymru_asn(asn: u32) -> Result<Vec<CymruASN>, String> {
+pub fn cymru_asn<I: Into<AsNumber>>(asn: I) -> Result<Vec<CymruASN>, String> {
     // Cymru's DNS server returns 86400 second TTL
     let ttl = Duration::from_secs(86400);
-    let query = format!("AS{}.asn.cymru.com", asn.to_string());
+    let query = format!("AS{}.asn.cymru.com", asn.into().to_string());
 
     match resolve_txt(&query) {
         Err(err) => Err(err.to_string()),
@@ -198,7 +200,7 @@ fn parse_cymru_asn(records: Vec<String>, cache_until: SystemTime) -> Vec<CymruAS
 
     for record in records {
         let fields: Vec<&str> = record.split('|').map(str::trim).collect();
-        let as_number: u32 = match fields[0].parse() {
+        let as_number: AsNumber = match fields[0].parse() {
             Err(_) => continue,
             Ok(n) => n,
         };
@@ -236,7 +238,7 @@ fn parse_cymru_origin(records: Vec<String>, cache_until: SystemTime) -> Vec<Cymr
         let as_numbers: Vec<&str> = fields[0].split(' ').map(str::trim).collect();
 
         for asn in as_numbers {
-            let as_number: u32 = match asn.parse() {
+            let as_number: AsNumber = match asn.parse() {
                 Err(_) => continue,
                 Ok(n) => n,
             };
