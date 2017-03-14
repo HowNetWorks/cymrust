@@ -87,7 +87,7 @@ struct CymruOrigin {
 /// If DNS resolver fails or there's error in DNS query, the error is returned as String
 ///
 pub fn cymru_ip2asn(ip: IpAddr) -> Result<Vec<CymruIP2ASN>, String> {
-    let origins: Vec<CymruOrigin> = try!(cymru_origin(ip));
+    let origins: Vec<CymruOrigin> = cymru_origin(ip)?;
     let mut results: Vec<CymruIP2ASN> = Vec::with_capacity(origins.len());
 
     'origins: for origin in origins {
@@ -98,7 +98,7 @@ pub fn cymru_ip2asn(ip: IpAddr) -> Result<Vec<CymruIP2ASN>, String> {
             }
         }
 
-        let asn: Vec<CymruASN> = try!(cymru_asn(origin.as_number));
+        let asn: Vec<CymruASN> = cymru_asn(origin.as_number)?;
 
         let result = CymruIP2ASN {
             ip_addr: ip,
@@ -263,8 +263,9 @@ fn parse_cymru_origin(records: Vec<String>, cache_until: SystemTime) -> Vec<Cymr
 /// to decode into UTF-8 Strings. TXT records which are not valid UTF-8 are silently discarded.
 ///
 fn resolve_txt(name: &str) -> io::Result<Vec<String>> {
-    let r = try!(DnsResolver::new(try!(default_config())));
-    let recs: Vec<Txt> = try!(r.resolve_record(name));
+    let config = default_config()?;
+    let resolver = DnsResolver::new(config)?;
+    let recs: Vec<Txt> = resolver.resolve_record(name)?;
     let mut txts = Vec::with_capacity(recs.len());
 
     for rec in recs {
