@@ -14,6 +14,9 @@ license = "MIT"
 
 exclude = [ ".gitignore", "circle.yml" ]
 
+[[example]]
+name = "whois"
+
 [dependencies]
 chrono = "0.3.0"
 resolve = "0.1.2"

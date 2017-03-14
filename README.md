@@ -26,7 +26,7 @@ fn main() {
 ```
 
 ```console
-$ cargo run --quiet 8.8.8.8
+$ cargo run -q --example whois 8.8.8.8
 Ok(
     [
         CymruIP2ASN {
