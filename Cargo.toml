@@ -5,6 +5,7 @@ authors = [ "Ossi Herrala <devel@hownetworks.io>" ]
 
 description = "Query Team Cymru's IP-to-ASN mapping via DNS"
 keywords = [ "ip", "network", "bgp", "resolver", "cymru" ]
+categories = [ "api-bindings" ]
 homepage = "https://github.com/HowNetWorks/cymrust#readme"
 repository = "https://github.com/HowNetWorks/cymrust"
 documentation = "https://docs.rs/cymrust/"
