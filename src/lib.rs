@@ -268,8 +268,9 @@ fn parse_cymru_origin(records: Vec<String>, cache_until: SystemTime) -> Vec<Cymr
 
 /// Resolve TXT record
 ///
-/// This is used to talk with Cymru. We expect them to provide us with ASCII strings which is safe
-/// to decode into UTF-8 Strings. TXT records which are not valid UTF-8 are silently discarded.
+/// This is used to talk with Cymru. We expect them to provide us with ASCII
+/// strings which is safe to decode into UTF-8 Strings. TXT records which are
+/// not valid UTF-8 are silently discarded.
 ///
 fn resolve_txt(name: &str) -> io::Result<Vec<String>> {
     let config = default_config()?;
@@ -278,10 +279,8 @@ fn resolve_txt(name: &str) -> io::Result<Vec<String>> {
     let mut txts = Vec::with_capacity(recs.len());
 
     for rec in recs {
-        let as_str = String::from_utf8(rec.data);
-        if as_str.is_ok() {
-            txts.push(as_str.unwrap());
-        }
+        let _ = String::from_utf8(rec.data)
+            .and_then(|value| Ok(txts.push(value)));
     }
     Ok(txts)
 }
