@@ -1,11 +1,13 @@
 //! Simple library to query [Team Cymru](https://www.team-cymru.org/)'s
-//! [IP-to-ASN](https://www.team-cymru.org/IP-ASN-mapping.html) mapping information via DNS.
+//! [IP-to-ASN](https://www.team-cymru.org/IP-ASN-mapping.html) mapping
+//! information via DNS.
 //!
-//! Please, see Team Cymru's documentation before using this library. Cymru also warns not to use
-//! their mapping as Geo-IP service.
+//! Please, see Team Cymru's documentation before using this library. Cymru also
+//! warns not to use their mapping as Geo-IP service.
 //!
-//! For easiest IP-to-ASN mapping, see [`cymru_ip2asn`](fn.cymru_ip2asn.html) function.
-//! To query only information about AS Number, see [`cymru_asn`](fn.cymru_asn.html).
+//! For easiest IP-to-ASN mapping, see [`cymru_ip2asn`](fn.cymru_ip2asn.html)
+//! function. To query only information about AS Number, see
+//! [`cymru_asn`](fn.cymru_asn.html).
 
 extern crate chrono;
 extern crate resolve;
@@ -21,7 +23,8 @@ use resolve::config::default_config;
 use resolve::record::Txt;
 use resolve::resolver::DnsResolver;
 
-/// AsNumber type to abstract away the fact that AS Number is (currently) 32 bit unsigned integer.
+/// `AsNumber` type to abstract away the fact that AS Number is (currently) 32
+/// bit unsigned integer.
 pub type AsNumber = u32;
 
 /// IP-to-ASN mapping information
@@ -77,16 +80,18 @@ struct CymruOrigin {
 
 /// Query Cymru's IP-to-ASN mapping service using DNS
 ///
-/// This function first queries (Cymru's IP-to-ASN)[https://www.team-cymru.org/IP-ASN-mapping.html]
-/// (AS number) mapping to learn AS number(s) for IP. Then for every AS unique number, it does a
-/// new query to get ASN information. The returned `CymruIP2ASN` is union of IP-to-ASN mapping and
-/// ASN query information.
+/// This function first queries [Cymru's
+/// IP-to-ASN](https://www.team-cymru.org/IP-ASN-mapping.html) (AS number)
+/// mapping to learn AS number(s) for IP. Then for every AS unique number, it
+/// does a new query to get ASN information. The returned `CymruIP2ASN` is union
+/// of IP-to-ASN mapping and ASN query information.
 ///
 /// No caching is performed by this function.
 ///
 /// # Errors
 ///
-/// If DNS resolver fails or there's error in DNS query, the error is returned as String
+/// If DNS resolver fails or there's error in DNS query, the error is returned
+/// as String
 ///
 pub fn cymru_ip2asn(ip: IpAddr) -> Result<Vec<CymruIP2ASN>, String> {
     let origins: Vec<CymruOrigin> = cymru_origin(ip)?;
@@ -125,14 +130,16 @@ pub fn cymru_ip2asn(ip: IpAddr) -> Result<Vec<CymruIP2ASN>, String> {
 
 /// Resolve information about AS number using DNS
 ///
-/// This function queries (Cymru's IP-to-ASN)[https://www.team-cymru.org/IP-ASN-mapping.html]
-/// service and returns information Cymru knows about given AS number.
+/// This function queries [Cymru's
+/// IP-to-ASN](https://www.team-cymru.org/IP-ASN-mapping.html) service and
+/// returns information Cymru knows about given AS number.
 ///
 /// No caching is performed by this function.
 ///
 /// # Errors
 ///
-/// If DNS resolver fails or there's error in DNS query, the error is returned as String
+/// If DNS resolver fails or there's error in DNS query, the error is returned
+/// as String
 ///
 pub fn cymru_asn<I: Into<AsNumber>>(asn: I) -> Result<Vec<CymruASN>, String> {
     // Cymru's DNS server returns 86400 second TTL
