@@ -1,6 +1,6 @@
 [package]
 name = "cymrust"
-version = "0.3.3"
+version = "0.3.4"
 authors = [ "Ossi Herrala <devel@hownetworks.io>" ]
 
 description = "Query Team Cymru's IP-to-ASN mapping via DNS"
