@@ -1,5 +1,3 @@
-extern crate cymrust;
-
 use std::env;
 use std::net::IpAddr;
 
