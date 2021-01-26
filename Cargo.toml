@@ -18,4 +18,4 @@ exclude = [ ".gitignore", "circle.yml" ]
 
 [dependencies]
 chrono = "0.4"
-trust-dns-resolver = "0.19"
+trust-dns-resolver = "0.20"
