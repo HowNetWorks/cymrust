@@ -11,8 +11,6 @@ Cymrust's docs can be found from [docs.rs](https://docs.rs/cymrust/).
 # Example
 
 ```rust
-extern crate cymrust;
-
 use std::env;
 use std::net::IpAddr;
 

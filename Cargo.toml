@@ -1,6 +1,6 @@
 [package]
 name = "cymrust"
-version = "0.4.0"
+version = "0.4.1"
 authors = [ "Ossi Herrala <devel@hownetworks.io>" ]
 edition = "2018"
 
